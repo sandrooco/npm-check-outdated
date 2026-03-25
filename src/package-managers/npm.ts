@@ -526,7 +526,9 @@ async function fetchUpgradedPackument(
 
   // fields may already include time
   const fieldsExtended =
-    options.format?.includes('time') && !fields.includes('time') ? ([...fields, 'time'] as (keyof Packument)[]) : fields
+    (options.format?.includes('time') || !!options.inactive) && !fields.includes('time')
+      ? ([...fields, 'time'] as (keyof Packument)[])
+      : fields
   const fullMetadata = fieldsExtended.includes('time')
 
   const npmConfigMerged = mergeNpmConfigs(
@@ -679,7 +681,7 @@ export const greatest: GetVersion = async (
 ): Promise<VersionResult> => {
   const fields: (keyof Packument)[] = ['versions']
 
-  if (options.cooldown) {
+  if (options.cooldown || options.inactive) {
     fields.push('time')
   }
 
@@ -696,15 +698,18 @@ export const greatest: GetVersion = async (
   // known type based on 'versions'
   const versions = packument?.versions
 
+  const version =
+    Object.values(versions || {})
+      .filter(tagPackument =>
+        filterPredicate(options)(decorateTagPackumentWithTimeAndName(tagPackument, packument as Partial<Packument>)),
+      )
+      .map(o => o.version)
+      .sort(versionUtil.compareVersions)
+      .at(-1) || null
+
   return {
-    version:
-      Object.values(versions || {})
-        .filter(tagPackument =>
-          filterPredicate(options)(decorateTagPackumentWithTimeAndName(tagPackument, packument as Partial<Packument>)),
-        )
-        .map(o => o.version)
-        .sort(versionUtil.compareVersions)
-        .at(-1) || null,
+    version,
+    ...(options.inactive && version && packument?.time?.[version] ? { time: packument.time[version] } : null),
   }
 }
 
@@ -805,7 +810,7 @@ export const distTag: GetVersion = async (
 ) => {
   const fields: (keyof Packument)[] = ['dist-tags']
 
-  if (options.cooldown) {
+  if (options.cooldown || options.inactive) {
     fields.push('time')
   }
 
@@ -947,7 +952,7 @@ export const minor: GetVersion = async (
 ): Promise<VersionResult> => {
   const fields: (keyof Packument)[] = ['versions']
 
-  if (options.cooldown) {
+  if (options.cooldown || options.inactive) {
     fields.push('time')
   }
 
@@ -971,7 +976,10 @@ export const minor: GetVersion = async (
     currentVersion,
     'minor',
   )
-  return { version }
+  return {
+    version,
+    ...(options.inactive && version && packument?.time?.[version] ? { time: packument.time[version] } : null),
+  }
 }
 
 /**
@@ -991,7 +999,7 @@ export const patch: GetVersion = async (
 ): Promise<VersionResult> => {
   const fields: (keyof Packument)[] = ['versions']
 
-  if (options.cooldown) {
+  if (options.cooldown || options.inactive) {
     fields.push('time')
   }
 
@@ -1015,7 +1023,10 @@ export const patch: GetVersion = async (
     currentVersion,
     'patch',
   )
-  return { version }
+  return {
+    version,
+    ...(options.inactive && version && packument?.time?.[version] ? { time: packument.time[version] } : null),
+  }
 }
 
 /**
@@ -1035,7 +1046,7 @@ export const semver: GetVersion = async (
 ): Promise<VersionResult> => {
   const fields: (keyof Packument)[] = ['versions']
 
-  if (options.cooldown) {
+  if (options.cooldown || options.inactive) {
     fields.push('time')
   }
 
@@ -1061,7 +1072,10 @@ export const semver: GetVersion = async (
   // TODO: Upgrading within a prerelease does not seem to work.
   // { includePrerelease: true } does not help.
   const version = nodeSemver.maxSatisfying(versionsFiltered, currentVersion)
-  return { version }
+  return {
+    version,
+    ...(options.inactive && version && packument?.time?.[version] ? { time: packument.time[version] } : null),
+  }
 }
 
 export default spawnNpm

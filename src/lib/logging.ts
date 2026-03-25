@@ -430,3 +430,43 @@ export function printIgnoredUpdatesDueToEnginesNode(
   )
   print(options, table)
 }
+
+/**
+ * Formats a duration in milliseconds into a human-readable string (e.g. "2 years ago", "3 months ago").
+ *
+ * @param ms  Duration in milliseconds.
+ * @returns   Human-readable relative time string.
+ */
+export function formatRelativeTime(ms: number): string {
+  const DAY = 86400000
+  const days = ms / DAY
+
+  if (days >= 365) {
+    const years = Math.floor(days / 365)
+    return `${years} year${years !== 1 ? 's' : ''} ago`
+  } else if (days >= 30) {
+    const months = Math.floor(days / 30)
+    return `${months} month${months !== 1 ? 's' : ''} ago`
+  } else {
+    const d = Math.floor(days)
+    return `${d} day${d !== 1 ? 's' : ''} ago`
+  }
+}
+
+/** Print packages that are up-to-date but have not received a new release in a long time. */
+export function printInactivePackages(
+  options: Options,
+  inactivePackages: Index<{ version: string; time: string }>,
+) {
+  const inactiveDays = typeof options.inactive === 'number' ? options.inactive : 0
+  print(options, `\nPotentially inactive packages (no new releases for ${Math.floor(inactiveDays)}+ days):\n`)
+  const table = renderDependencyTable(
+    Object.entries(inactivePackages)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([pkgName, { version, time }]) => {
+        const age = Date.now() - new Date(time).getTime()
+        return [pkgName, version, chalk.gray(`(last published: ${formatRelativeTime(age)})`)]
+      }),
+  )
+  print(options, table)
+}

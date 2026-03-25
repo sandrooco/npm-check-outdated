@@ -20,12 +20,14 @@ import {
   print,
   printIgnoredUpdatesDueToEnginesNode,
   printIgnoredUpdatesDueToPeerDeps,
+  printInactivePackages,
   printJson,
   printSorted,
   printUpgrades,
   toDependencyTable,
 } from './logging'
 import { pick } from './pick'
+import parseCooldown from './parseCooldown'
 import programError from './programError'
 import resolveDepSections from './resolveDepSections'
 import upgradePackageData from './upgradePackageData'
@@ -289,6 +291,25 @@ export default async function runLocal(
       const ignoredUpdates = await getIgnoredUpgradesDueToEnginesNode(current, upgraded, options)
       if (Object.keys(ignoredUpdates).length > 0) {
         printIgnoredUpdatesDueToEnginesNode(options, ignoredUpdates)
+      }
+    }
+    if (options.inactive) {
+      const inactiveDays =
+        typeof options.inactive === 'number'
+          ? options.inactive
+          : (parseCooldown(options.inactive as string) ?? parseInt(options.inactive as string, 10))
+      const DAY_AS_MS = 86400000
+      const inactivePackages = keyValueBy(latestResults, (dep, result) => {
+        // only consider packages that are already at the target version (no upgrade available)
+        if (upgraded[dep] || !result.time) return null
+        const age = Date.now() - new Date(result.time).getTime()
+        if (age >= inactiveDays * DAY_AS_MS) {
+          return { [dep]: { version: result.version ?? current[dep] ?? '', time: result.time } }
+        }
+        return null
+      })
+      if (Object.keys(inactivePackages).length > 0) {
+        printInactivePackages(options, inactivePackages)
       }
     }
   }

@@ -273,6 +273,10 @@ Options that take no arguments can be negated by prefixing them with `--no-`, e.
     <td>Customize how packages are divided into groups when using <code>--format group</code>.</td>
   </tr>
   <tr>
+    <td><a href="#inactive">--inactive &lt;period&gt;</a></td>
+    <td>Reports packages that are up-to-date but have not received a new release for at least the given amount of time. Accepts a number (days) or a string with a unit: "365d" (days), "1y" (year), "12h" (hours), "30m" (minutes).</td>
+  </tr>
+  <tr>
     <td><a href="#install">--install &lt;value&gt;</a></td>
     <td>Control the auto-install behavior: always, never, prompt. (default: "prompt")</td>
   </tr>
@@ -676,6 +680,37 @@ groupFunction: (name, defaultGroup, currentSpec, upgradedSpec, upgradedVersion) 
   }
   return defaultGroup
 }
+```
+
+## inactive
+
+Usage:
+
+    ncu --inactive [period]
+
+Reports packages that are up-to-date but have not received a new release for at least the given amount of time. Useful for identifying potentially unmaintained dependencies.
+
+The value can be a plain number (days) or a string with a unit suffix:
+
+    --inactive 365     365 days (about 1 year)
+    --inactive 365d    365 days (same as above)
+    --inactive 1y      1 year
+    --inactive 12h     12 hours
+    --inactive 30m     30 minutes
+
+Only packages that are already on the latest version (no upgrade available) are reported. Packages with available upgrades are unaffected by this option.
+
+Example:
+
+```js
+$ ncu --inactive 365
+```
+
+This will display all up-to-date packages that have not published a new version in the past year, such as:
+
+```js
+Potentially inactive packages (no new releases for 365+ days):
+ lodash   4.17.21   (last published: 3 years ago)
 ```
 
 ## install

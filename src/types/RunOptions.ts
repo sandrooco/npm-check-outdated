@@ -98,6 +98,9 @@ export interface RunOptions {
   /** Customize how packages are divided into groups when using `--format group`. Run "ncu --help --groupFunction" for details. */
   groupFunction?: GroupFunction
 
+  /** Reports packages that are up-to-date but have not received a new release for at least the given amount of time. Accepts a number (days) or a string with a unit: "365d" (days), "1y" (year), "12h" (hours), "30m" (minutes). Run "ncu --help --inactive" for details. */
+  inactive?: number | string
+
   /** Control the auto-install behavior: always, never, prompt. Run "ncu --help --install" for details.
    *
    * @default "prompt"
