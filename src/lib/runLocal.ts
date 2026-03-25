@@ -26,8 +26,8 @@ import {
   printUpgrades,
   toDependencyTable,
 } from './logging'
-import { pick } from './pick'
 import parseCooldown from './parseCooldown'
+import { pick } from './pick'
 import programError from './programError'
 import resolveDepSections from './resolveDepSections'
 import upgradePackageData from './upgradePackageData'
@@ -298,7 +298,7 @@ export default async function runLocal(
         typeof options.inactive === 'number'
           ? options.inactive
           : (parseCooldown(options.inactive as string) ?? parseInt(options.inactive as string, 10))
-      const DAY_AS_MS = 86400000
+      const DAY_AS_MS = 86400000 // milliseconds in a day
       const inactivePackages = keyValueBy(latestResults, (dep, result) => {
         // only consider packages that are already at the target version (no upgrade available)
         if (upgraded[dep] || !result.time) return null

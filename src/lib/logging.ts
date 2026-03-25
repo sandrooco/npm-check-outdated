@@ -433,19 +433,20 @@ export function printIgnoredUpdatesDueToEnginesNode(
 
 /**
  * Formats a duration in milliseconds into a human-readable string (e.g. "2 years ago", "3 months ago").
+ * Uses approximate values: 365 days per year, 30 days per month.
  *
  * @param ms  Duration in milliseconds.
  * @returns   Human-readable relative time string.
  */
 export function formatRelativeTime(ms: number): string {
-  const DAY = 86400000
-  const days = ms / DAY
+  const DAY_AS_MS = 86400000 // milliseconds in a day
+  const days = ms / DAY_AS_MS
 
   if (days >= 365) {
-    const years = Math.floor(days / 365)
+    const years = Math.floor(days / 365) // approximate: 365 days per year
     return `${years} year${years !== 1 ? 's' : ''} ago`
   } else if (days >= 30) {
-    const months = Math.floor(days / 30)
+    const months = Math.floor(days / 30) // approximate: 30 days per month
     return `${months} month${months !== 1 ? 's' : ''} ago`
   } else {
     const d = Math.floor(days)
@@ -454,10 +455,7 @@ export function formatRelativeTime(ms: number): string {
 }
 
 /** Print packages that are up-to-date but have not received a new release in a long time. */
-export function printInactivePackages(
-  options: Options,
-  inactivePackages: Index<{ version: string; time: string }>,
-) {
+export function printInactivePackages(options: Options, inactivePackages: Index<{ version: string; time: string }>) {
   const inactiveDays = typeof options.inactive === 'number' ? options.inactive : 0
   print(options, `\nPotentially inactive packages (no new releases for ${Math.floor(inactiveDays)}+ days):\n`)
   const table = renderDependencyTable(
