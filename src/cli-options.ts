@@ -641,6 +641,34 @@ ${chalk.green('cooldown')}: packageName ${chalk.cyan('=>')} (packageName.startsW
 `
 }
 
+/** Extended help for the --inactive option. */
+const extendedHelpInactive: ExtendedHelp = ({ markdown }) => {
+  return `Reports packages that are up-to-date but have not received a new release for at least the given amount of time. Useful for identifying potentially unmaintained dependencies.
+
+The value can be a plain number (days) or a string with a unit suffix:
+
+    --inactive 365     365 days (about 1 year)
+    --inactive 365d    365 days (same as above)
+    --inactive 1y      1 year
+    --inactive 12h     12 hours
+    --inactive 30m     30 minutes
+
+Only packages that are ${chalk.bold('already on the latest version')} (no upgrade available) are reported. Packages with available upgrades are unaffected by this option.
+
+${chalk.bold('Example')}:
+
+${codeBlock(`${chalk.cyan('$')} ncu --inactive 365`, { markdown })}
+
+This will display all up-to-date packages that have not published a new version in the past year, such as:
+
+${codeBlock(
+  `Potentially inactive packages (no new releases for 365+ days):
+ lodash   4.17.21   (last published: 3 years ago)`,
+  { markdown },
+)}
+`
+}
+
 // store CLI options separately from bin file so that they can be used to build type definitions
 const cliOptions: CLIOption[] = [
   {
@@ -820,6 +848,24 @@ const cliOptions: CLIOption[] = [
     default: 'prompt',
     choices: ['always', 'never', 'prompt'],
     type: `'always' | 'never' | 'prompt'`,
+  },
+  {
+    long: 'inactive',
+    arg: 'period',
+    description:
+      'Reports packages that are up-to-date but have not received a new release for at least the given amount of time. Accepts a number (days) or a string with a unit: "365d" (days), "1y" (year), "12h" (hours), "30m" (minutes).',
+    type: 'number | string',
+    help: extendedHelpInactive,
+    parse: value => {
+      if (typeof value === 'number') {
+        return value
+      } else if (typeof value === 'string') {
+        const days = parseCooldown(value)
+        return days !== null ? days : parseInt(value, 10)
+      } else {
+        throw new Error('inactive must be a number or string')
+      }
+    },
   },
   {
     long: 'interactive',
